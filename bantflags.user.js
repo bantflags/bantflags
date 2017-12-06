@@ -244,8 +244,8 @@ var setup = {
         return GM_getValue(setup.namespace + k);
     },
     init: function () {
-        //GM_registerMenuCommand('Extra Flags setup', setup.show;
-        GM_registerMenuCommand('Extra Flags setup', setup.show);
+        //GM_registerMenuCommand('Bant Flags setup', setup.show;
+        GM_registerMenuCommand('Bant Flags setup', setup.show);
     }
 };
 
