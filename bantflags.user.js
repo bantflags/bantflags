@@ -1,8 +1,7 @@
 // ==UserScript==
-// name and namespace cannot be changed - it would break the update mechanism, that's why we will leave the name at Extra Flags for int
 // @name        BantFlags
 // @namespace   BintFlegs
-// @description BantFlags test
+// @description More flags for r/banter
 // @include     http*://boards.4chan.org/bant/*
 // @exclude     http*://boards.4chan.org/bant/catalog
 // @version     0.30
@@ -55,25 +54,22 @@ var setup = {
     id: "ExtraFlags-setup",
     html: function () {
 
-        var htmlFixedStart = '<div>Extra Flags for 4chan v2</div><br/>';
+        var htmlFixedStart = '<div>Bant Flags Alpha</div><br/>';
         var htmlBackButton = '<button name="back">Back</button>';
         var htmlNextButton = '<button name="forward">Next</button>';
         var htmlBackNextButtons = '<div>' + htmlBackButton + htmlNextButton + '</div>';
-        var htmlSaveButton = '<div><button name="save" title="Pressing &#34;Save Regions&#34; will set your regions to the ones current displayed below.">' +
-            'Save Regions</button></div><br/>';
-        var htmlHelpText = '<label name="' + shortId + 'label"> You can go as deep as you like, regions stack.<br/>' +
-            'For example; United States, California, Los Angeles<br/></label>' +
-            '<label>Country must match your flag! Your flag not here? Open issue here:<br/>' +
+        var htmlSaveButton = '<div><button name="save" title="Pressing &#34;Save Flags&#34; will set your Flags to the ones current displayed below.">' +
+            'Save Flags</button></div><br/>';
+        var htmlHelpText = '<label name="' + shortId + 'label"> We currently only support one flag at a time, but that may change in the future<br/></label>' +
+            '<label>Please report any issues on:<br/>' +
             '<a href="https://github.com/bantflags/bantflags/issues" style="color:blue">' +
             'https://github.com/bantflags/bantflags/issues</a></label>';
         var filterRadio = '<br/><br/><form id="filterRadio">' +
-            '<input type="radio" name="filterRadio" id="filterRadioall" style="display: inline !important;" value="all"><label>Show country + ALL regions.</label>' +
-            '<br/><input type="radio" name="filterRadio" id="filterRadiofirst" style="display: inline !important;" value="first"><label>Only show country + FIRST region.</label>' +
-            '<br/><input type="radio" name="filterRadio" id="filterRadiolast" style="display: inline !important;" value="last"><label>Only show country + LAST region. (v1/old format)</label>' +
+            '<input type="radio" name="filterRadio" id="filterRadioall" style="display: inline !important;" value="all"><label>Theis radio button was fairly important in extraflags, but serve no purpose in bantflags!</label>' +
             '</form>';
 
         if (regions.length > 1) {
-            var selectMenuFlags = "Regional flags selected: ";
+            var selectMenuFlags = "Flags selected: ";
             var path = flegsBaseUrl + "/" + regions[0];
             for (var i = 1; i < regions.length; i++) {
                 path += "/" + regions[i];
@@ -259,7 +255,7 @@ radio = setup.load(radioVariable);
 if (!regions) {
     regions = [];
     setTimeout(function () {
-        if (window.confirm("Extra Flags: No region detected, set it up now?") === true) {
+        if (window.confirm("Bant Flags: No Flags detected, set it up now?") === true) {
             setup.show();
         }
     }, 2000);
@@ -319,12 +315,6 @@ function onFlagsLoad(response) {
 
                     newFlag.innerHTML = "<img src=\"" + flegsBaseUrl + path + ".png\"" + newFlagImgOpts + " title=\"" + postedRegions[i] + "\">";
                     newFlag.className = "extraFlag";
-
-                    if (i > 0) {
-                        newFlag.href = "https://www.google.com/search?q=" + postedRegions[i] + ", " + postedRegions[i - 1];
-                    } else {
-                        newFlag.href = "https://www.google.com/search?q=" + postedRegions[i] + ", " + currentFlag.title;
-                    }
 
                     newFlag.target = '_blank';
                     //padding format: TOP x RIGHT_OF x BOTTOM x LEFT_OF
