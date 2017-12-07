@@ -70,7 +70,7 @@ var setup = {
 
         if (regions.length > 1) {
             var selectMenuFlags = "Flags selected: ";
-            var path = flegsBaseUrl + "/" + regions[0];
+            var path = flegsBaseUrl + regions[0];
             for (var i = 1; i < regions.length; i++) {
                 path += "/" + regions[i];
                 selectMenuFlags += "<img src='" + path + ".png'" +  " title='" + regions[i] + "'> ";
@@ -131,7 +131,7 @@ var setup = {
                         opt.value = countriesAvailable[countriesCounter];
 
                         if (regions.length > 0) {
-                            opt.innerHTML = countriesAvailable[countriesCounter] + " " + "<img src=\"" + flegsBaseUrl + pathNoFlagList + countriesAvailable[countriesCounter] + ".png\"" + " title=\"" + countriesAvailable[countriesCounter] + "\">";
+                            opt.innerHTML = countriesAvailable[countriesCounter] + " " + "<img src=\"" + pathNoFlagList + countriesAvailable[countriesCounter] + ".png\"" + " title=\"" + countriesAvailable[countriesCounter] + "\">";
                         } else {
                             opt.innerHTML = countriesAvailable[countriesCounter]; // remove comment to enable country flags in the selection menu + " " + "<img src=\"" + countryFlegsBaseUrl + countriesAvailable[countriesCounter] + ".png\"" + " title=\"" + countriesAvailable[countriesCounter] + "\">";
                         }
