@@ -40,7 +40,7 @@ var postNrs = [];
 var postRemoveCounter = 60;
 var requestRetryInterval = 5000;
 var flegsBaseUrl = 'https://nineball.party/files/flags/';
-// remove comment and change link to add country flag icons into selection menu var countryFlegsBaseUrl = 'https://raw.githubusercontent.com/flagzzzz/Extra-Flags-for-4chan/master/flags/';
+var countryFlegsBaseUrl = 'https://nineball.party/files/flags/';
 var flagListFile = 'flag_list.txt';
 var backendBaseUrl = 'https://nineball.party/';
 var postUrl = 'files/post_flag_api2.php';
@@ -76,14 +76,14 @@ var setup = {
                 selectMenuFlags += "<img src='" + path + ".png'" +  " title='" + regions[i] + "'> ";
             }
             selectMenuFlags += "<br/>";
-            return htmlFixedStart + '<div>Region: <br/><select id="' + shortId + 'countrySelect">' +
+            return htmlFixedStart + '<div>Flags: <br/><select id="' + shortId + 'countrySelect">' +
                 '</select></div><br/>' + htmlBackNextButtons +
                 '<br/>' + htmlSaveButton + '</div>' + selectMenuFlags + htmlHelpText + filterRadio;
         }
 
         if (regions.length == 1) {
             var selectMenuFlags = "<br/>";
-            return htmlFixedStart + '<div>Region: <br/><select id="' + shortId + 'countrySelect">' +
+            return htmlFixedStart + '<div>Flags: <br/><select id="' + shortId + 'countrySelect">' +
                 '</select></div><br/>' + htmlBackNextButtons +
                 '<br/>' + '</div><br/><br/>' + selectMenuFlags + htmlHelpText + filterRadio;
        }
@@ -94,7 +94,7 @@ var setup = {
     },
     fillHtml: function (path1) {
         if (path1 === "") { //normal call
-            var path = flegsBaseUrl + "/";
+            var path = flegsBaseUrl;
             var oldPath = path;
             if (regions.length > 0) {
                 for (var i = 0; i < regions.length; i++) {
@@ -176,9 +176,10 @@ var setup = {
         }
         /* create new setup window */
         GM_addStyle('\
-            #' + setup.id + ' { position:fixed;z-index:10001;top:40px;right:40px;padding:20px 30px;background-color:white;width:auto;border:1px solid black }\
-            #' + setup.id + ' * { color:black;text-align:left;line-height:normal;font-size:12px }\
-            #' + setup.id + ' div { text-align:center;font-weight:bold;font-size:14px }'
+            #' + setup.id + ' { position:fixed;z-index:10001;top:40px;right:40px;padding:20px 30px;background-color:white;width:auto;border:1px solid black; }\
+            #' + setup.id + ' * { color:black;text-align:left;line-height:normal;font-size:12px;cursor: default; }\
+            #' + setup.id + ' div { text-align:center;font-weight:bold;font-size:14px; }\
+            #' + setup.id + ' a {color: blue; cursor: pointer;}'
         );
         setup_el = document.createElement('div');
         setup_el.id = setup.id;
@@ -294,7 +295,7 @@ function onFlagsLoad(response) {
             postedRegions = post.region.split(regionDivider);
 
         if (postedRegions.length > 0 && !(currentFlag === undefined)) {
-            var path = currentFlag.title;
+            var path = "actual_flags";
             for (var i = 0; i < postedRegions.length; i++) {
                 path += "/" + postedRegions[i];
 
