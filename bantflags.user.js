@@ -4,12 +4,10 @@
 // @description More flags for r/banter
 // @include     http*://boards.4chan.org/bant/*
 // @exclude     http*://boards.4chan.org/bant/catalog
-// @version     0.30
+// @version     0.40
 // @grant       GM_xmlhttpRequest
-// @grant       GM_registerMenuCommand
 // @grant       GM_getValue
 // @grant       GM_setValue
-// @grant       GM_addStyle
 // @run-at      document-end
 // ==/UserScript==
 
@@ -19,7 +17,7 @@
 
 /** JSLint excludes */
 /*jslint browser: true*/
-/*global document, console, GM_addStyle, GM_setValue, GM_getValue, GM_registerMenuCommand, GM_xmlhttpRequest, cloneInto, unsafeWindow*/
+/*global document, console, GM_setValue, GM_getValue, GM_xmlhttpRequest, cloneInto, unsafeWindow*/
 
 /* WebStorm JSLint ticked:
  - uncapitalized constructors
@@ -29,240 +27,126 @@
 
 /* Right margin: 160 */
 
-// DO NOT EDIT ANYTHING IN THIS SCRIPT DIRECTLY - YOUR REGION SHOULD BE CONFIGURED BY USING THE CONFIGURATION BOXES (see install webms for help)
+// DO NOT EDIT ANYTHING IN THIS SCRIPT DIRECTLY - YOUR REGION SHOULD BE CONFIGURED BY USING THE CONFIGURATION BOXES
 var regions = [];
-var radio = "all";
-var lastRegion = ""; //used for back button
 var regionVariable = 'regionVariableAPI2';
-var radioVariable = 'radioVariableAPI2';
 var allPostsOnPage = [];
 var postNrs = [];
 var postRemoveCounter = 60;
 var requestRetryInterval = 5000;
 var flegsBaseUrl = 'https://nineball.party/files/flags/';
-var countryFlegsBaseUrl = 'https://nineball.party/files/flags/';
 var flagListFile = 'flag_list.txt';
 var backendBaseUrl = 'https://nineball.party/';
 var postUrl = 'files/post_flag_api2.php';
 var getUrl = 'files/get_flags_api2.php';
-var shortId = 'witingwc.ef.';
+var shortId = '490.bf.'; // TODO: reimplement, this isn't stupid
 var regionDivider = "||";
 
-/** Setup, preferences */
-var setup = {
+/** nSetup, preferences */
+var nsetup = { // not anymore a clone of the original setup
     namespace: 'BintFlegs',
-    id: "ExtraFlags-setup",
-    html: function () {
-
-        var htmlFixedStart = '<div>Bant Flags Alpha</div><br/>';
-        var htmlBackButton = '<button name="back">Back</button>';
-        var htmlNextButton = '<button name="forward">Next</button>';
-        var htmlBackNextButtons = '<div>' + htmlBackButton + htmlNextButton + '</div>';
-        var htmlSaveButton = '<div><button name="save" title="Pressing &#34;Save Flags&#34; will set your Flags to the ones current displayed below.">' +
-            'Save Flags</button></div><br/>';
-        var htmlHelpText = '<label name="' + shortId + 'label"> We currently only support one flag at a time, but that may change in the future<br/></label>' +
-            '<label>Please report any issues on:<br/>' +
-            '<a href="https://github.com/bantflags/bantflags/issues" style="color:blue">' +
-            'https://github.com/bantflags/bantflags/issues</a></label>';
-        var filterRadio = '<br/><br/><form id="filterRadio">' +
-            '<input type="radio" name="filterRadio" id="filterRadioall" style="display: inline !important;" value="all"><label>Theis radio button was fairly important in extraflags, but serve no purpose in bantflags!</label>' +
-            '</form>';
-
-        if (regions.length > 1) {
-            var selectMenuFlags = "Flags selected: ";
-            var path = flegsBaseUrl + regions[0];
-            for (var i = 1; i < regions.length; i++) {
-                path += "/" + regions[i];
-                selectMenuFlags += "<img src='" + path + ".png'" +  " title='" + regions[i] + "'> ";
-            }
-            selectMenuFlags += "<br/>";
-            return htmlFixedStart + '<div>Flags: <br/><select id="' + shortId + 'countrySelect">' +
-                '</select></div><br/>' + htmlBackNextButtons +
-                '<br/>' + htmlSaveButton + '</div>' + selectMenuFlags + htmlHelpText + filterRadio;
-        }
-
-        if (regions.length == 1) {
-            var selectMenuFlags = "<br/>";
-            return htmlFixedStart + '<div>Flags: <br/><select id="' + shortId + 'countrySelect">' +
-                '</select></div><br/>' + htmlBackNextButtons +
-                '<br/>' + '</div><br/><br/>' + selectMenuFlags + htmlHelpText + filterRadio;
-       }
-
-        return htmlFixedStart + '<div>Country: <br/><select id="' + shortId + 'countrySelect">' +
-            '</select></div><br/>' + htmlBackNextButtons + '<br/>' + htmlHelpText + filterRadio;
-
-    },
+    id: "bantFlags-setup", // doesn't seem to get used
+    form: "<span id=\"bantflags_container\"></span>" +
+          "<button type=\"button\" id=\"append_flag_button\" title=\"Click to add selected flag to your flags. Click on flags to remove them. Saving happens automatically, you only need to refresh the pages that have an outdated flaglist on the page.\"><<</button>" +
+          "<select id=\"flagSelect\"></select>",
     fillHtml: function (path1) {
-        if (path1 === "") { //normal call
-            var path = flegsBaseUrl;
-            var oldPath = path;
-            if (regions.length > 0) {
-                for (var i = 0; i < regions.length; i++) {
-                    oldPath = path;
-                    path += regions[i] + "/";
-                }
-            }
-            var pathNoFlagList = path;
-        } else { // end of folder line call
-            path = path1;
-            oldPath = "";
-            var pathNoFlagList = path;
-        }
-
-        /* resolve countries which we support */
-        GM_xmlhttpRequest({
-            method: "GET",
-            url: path + flagListFile,
-            headers: {
+          var path = flegsBaseUrl + "/actual_flags/";
+          var oldPath = path;
+          // resolve countries which we support
+          GM_xmlhttpRequest({
+             method: "GET",
+             url: path + flagListFile,
+             headers: {
                 "Content-Type": "application/x-www-form-urlencoded"
-            },
-            onload: function (response) {
-                if (response.status == 404) { // detect if there are no more folders
-                    setup.fillHtml(oldPath);
-                    setup.q('forward').disabled = true; // disable next button
-                } else {
-                    //hide spam, debug purposes only
-                    //console.log(response.responseText);
-                    var countrySelect = document.getElementById(shortId + 'countrySelect'),
-                        countriesAvailable = response.responseText.split('\n');
+             },
+             onload: function (response) {
+                var countrySelect = document.getElementById("flagSelect"),
+                countriesAvailable = response.responseText.split('\n');
 
-                    for (var countriesCounter = 0; countriesCounter < countriesAvailable.length - 1; countriesCounter++) {
-                        var opt = document.createElement('option');
-                        opt.value = countriesAvailable[countriesCounter];
-
-                        if (regions.length > 0) {
-                            opt.innerHTML = countriesAvailable[countriesCounter] + " " + "<img src=\"" + pathNoFlagList + countriesAvailable[countriesCounter] + ".png\"" + " title=\"" + countriesAvailable[countriesCounter] + "\">";
-                        } else {
-                            opt.innerHTML = countriesAvailable[countriesCounter]; // remove comment to enable country flags in the selection menu + " " + "<img src=\"" + countryFlegsBaseUrl + countriesAvailable[countriesCounter] + ".png\"" + " title=\"" + countriesAvailable[countriesCounter] + "\">";
-                        }
-
-
-                        if (lastRegion != "" && countriesAvailable[countriesCounter] === lastRegion) { // automatically select last selected when going up a folder
-                            opt.selected = "selected";
-                        } else if (oldPath == "" && countriesAvailable[countriesCounter] === regions[regions.length - 1]) { // show final selected when no more
-                            // folders detected
-                            opt.selected = "selected";
-                        }
-                        countrySelect.appendChild(opt);
-                    }
+                for (var countriesCounter = 0; countriesCounter < countriesAvailable.length - 1; countriesCounter++) {
+                   var opt = document.createElement('option');
+                   opt.value = countriesAvailable[countriesCounter];
+                   opt.innerHTML = "<img src=\"" + path + countriesAvailable[countriesCounter] + ".png\"" + " title=\"" + countriesAvailable[countriesCounter] + "\">" + " " + countriesAvailable[countriesCounter];
+                   countrySelect.appendChild(opt);
                 }
-
-            }
-        });
-    },
-    setRadio: function() {
-        var radioStatus = setup.load(radioVariable);
-        if (!radioStatus || radioStatus === "" || radioStatus === "undefined") {
-            radioStatus = "all";
-        }
-        var radioButton = document.getElementById("filterRadio" + radioStatus);
-        radioButton.checked = true;
-    },
-    q: function (n) {
-        return document.querySelector('#' + this.id + ' *[name="' + n + '"]');
-    },
-    removeExtra: function () {
-        if (regions.length > 0) {
-            lastRegion = regions[regions.length - 1];
-            regions.pop();
-        }
-        setup.show();
-    },
-    show: function () {
-        /* remove setup window if existing */
-        var setup_el = document.getElementById(setup.id);
-        if (setup_el) {
-            setup_el.parentNode.removeChild(setup_el);
-        }
-        /* create new setup window */
-        GM_addStyle('\
-            #' + setup.id + ' { position:fixed;z-index:10001;top:40px;right:40px;padding:20px 30px;background-color:white;width:auto;border:1px solid black; }\
-            #' + setup.id + ' * { color:black;text-align:left;line-height:normal;font-size:12px;cursor: default; }\
-            #' + setup.id + ' div { text-align:center;font-weight:bold;font-size:14px; }\
-            #' + setup.id + ' a {color: blue; cursor: pointer;}'
-        );
-        setup_el = document.createElement('div');
-        setup_el.id = setup.id;
-        setup_el.innerHTML = setup.html();
-        setup.fillHtml("", "");
-
-        document.body.appendChild(setup_el);
-
-        setup.setRadio();
-
-        /* button listeners */
-        setup.q('back').addEventListener('click', function () {
-            if (regions.length > 0) {
-                if (setup.q('forward').disabled == true) {
-                    setup.q('forward').disabled = false; // reenable next button
-                }
-                lastRegion = regions[regions.length - 1];
-                regions.pop();
-                setup.show();
-            }
-        }, false);
-
-        setup.q('forward').addEventListener('click', function () {
-            var e = document.getElementById(shortId + "countrySelect");
-            var temp = e.options[e.selectedIndex].value;
-            lastRegion = "";
-            if (temp != "" && regions[regions.length - 1] != temp) {
-                this.disabled = true;
-                this.innerHTML = 'Saving...';
-
-                lastRegion = regions[regions.length - 1];
-                regions.push(temp);
-                setup.show();
-            }
-
-        }, false);
-
-        setup.q('save').addEventListener('click', function () {
-            var e = document.getElementById(shortId + "countrySelect");
-            var temp = e.options[e.selectedIndex].value;
-
-            if (regions[regions.length - 1] === "") { //prevent last spot from being blank
-                regions.pop();
-            }
-            lastRegion = "";
-
-            radio = document.querySelector('input[name="filterRadio"]:checked').value;
-            setup.save(radioVariable, radio);
-
-            alert('Flags set: ' + regions + '\n\n' + 'Refresh all your 4chan tabs and be sure to post using the quick reply window!');
-
-            this.disabled = true;
-            this.innerHTML = 'Saving...';
-            setup_el.parentNode.removeChild(setup_el);
-            setup.save(regionVariable, regions);
-
-        }, false);
+             }
+          });
     },
     save: function (k, v) {
-        GM_setValue(setup.namespace + k, v);
+        GM_setValue(nsetup.namespace + k, v);
+        regions = nsetup.load(regionVariable);
     },
     load: function (k) {
-        return GM_getValue(setup.namespace + k);
+        //console.log("loading happens here");
+        return GM_getValue(nsetup.namespace + k);
+    },
+    setFlag: function(flag) { // place a flag from the selector to the flags array variable and create an element in the flags_container div
+        var path = flegsBaseUrl + '/actual_flags/';
+        var UID = Math.random().toString(36).substring(7);
+        if (!flag) {
+            var flagName = document.getElementById("flagSelect").value;
+        } else {
+            flagName = flag;
+        }
+        var flagContainer = document.getElementById("bantflags_container");
+        var flagElement = document.createElement('img');
+        flagElement.title = flagName;
+        flagElement.setAttribute("src", path + flagName + ".png");
+        flagElement.setAttribute("id", UID);
+        flagElement.setAttribute("class", "bantflags_flag");
+        flagContainer.appendChild(flagElement);
+        var flagsCount = flagContainer.children.length;
+        if (flagsCount > 8) {nsetup.gray("on"); } // Why does 8 work? What happened to the async issue a moment ago?
+        document.getElementById(UID).addEventListener("click", function() {
+            var flagToRemove = document.getElementById(UID);
+            flagToRemove.parentNode.removeChild(flagToRemove);
+            nsetup.gray("off");
+            nsetup.save(regionVariable, nsetup.parse());
+        });
+        if (!flag){ nsetup.save(regionVariable, nsetup.parse()); }
     },
     init: function () {
-        //GM_registerMenuCommand('Bant Flags setup', setup.show;
-        GM_registerMenuCommand('Bant Flags setup', setup.show);
+        // here we insert the form for placing flags. How?
+        var flagsForm = document.createElement("div");
+        flagsForm.setAttribute("class", "flagsForm");
+        flagsForm.innerHTML = nsetup.form;
+        addGlobalStyle('.flagsForm{text-align: right;}');
+        addGlobalStyle(".bottomCtrl{text-align: right !important; } .bantflags_flag { padding: 1px;} [title^='Romania'] { position: relative; animation: shakeAnim 0.1s linear infinite;} @keyframes shakeAnim { 0% {left: 1px;} 25% {top: 2px;} 50% {left: 1px;} 75% {left: 0px;} 100% {left: 2px;}}");
+        document.getElementsByClassName("bottomCtrl")[0].parentNode.appendChild(document.createElement("br")); // lol                                    Copy and paste abstraction
+        document.getElementsByClassName("bottomCtrl")[0].parentNode.appendChild(document.createElement("br")); // I don't like this either but that stupid delete form floats right
+        document.getElementsByClassName("bottomCtrl")[0].parentNode.appendChild(flagsForm);
+        for (var i in regions) {
+            nsetup.setFlag(regions[i]);
+        }
+        document.getElementById("append_flag_button").addEventListener("click", function() { nsetup.setFlag(); });
+        nsetup.fillHtml("", ""); // I have no idea what this argument is tbh fampai
+    },
+    parse: function() {
+        var flagsArray = [];
+        var flagElements = document.getElementsByClassName("bantflags_flag");
+        for (var i = 0; i < flagElements.length; i++) {
+            flagsArray[i] = flagElements[i].title;
+            //console.log("added a flag to flagsArray");
+        }
+        return flagsArray;
+    },
+    gray: function(state) {
+        var button = document.getElementById("append_flag_button");
+        if (state == "on") {
+            button.disabled = true;
+        } else {
+            button.disabled = false;
+        }
     }
 };
 
 /** Prompt to set region if regionVariable is empty  */
-regions = setup.load(regionVariable);
-radio = setup.load(radioVariable);
+regions = nsetup.load(regionVariable);
 if (!regions) {
     regions = [];
     setTimeout(function () {
-        if (window.confirm("Bant Flags: No Flags detected, set it up now?") === true) {
-            setup.show();
-        }
+        window.confirm("Bant Flags: No Flags detected");
     }, 2000);
-}
-if (!radio || radio === "" || radio === "undefined") {
-    radio = "all";
 }
 
 /** parse the posts already on the page before thread updater kicks in */
@@ -297,32 +181,17 @@ function onFlagsLoad(response) {
         if (postedRegions.length > 0 && !(currentFlag === undefined)) {
             var path = "actual_flags";
             for (var i = 0; i < postedRegions.length; i++) {
-                path += "/" + postedRegions[i];
-
-                // this is probably quite a dirty fix, but it's fast
-                if ((radio === "all") || (radio === "first" && i === 0) || (radio === "last" && i === (postedRegions.length - 1))) {
-                    var newFlag = document.createElement('a');
-                    nameBlock.appendChild(newFlag);
-
-                    var lastI = i;
-                    if (radio === 'last') {
-                        lastI = 0;
-                    }
-
-                    var newFlagImgOpts = 'onerror="(function () {var extraFlagsImgEl = document.getElementById(\'pc' + post.post_nr +
-                        '\').getElementsByClassName(\'extraFlag\')[' + lastI +
-                        '].firstElementChild; if (!/\\/empty\\.png$/.test(extraFlagsImgEl.src)) {extraFlagsImgEl.src = \'' +
-                        flegsBaseUrl + 'empty.png\';}})();"';
-
-                    newFlag.innerHTML = "<img src=\"" + flegsBaseUrl + path + ".png\"" + newFlagImgOpts + " title=\"" + postedRegions[i] + "\">";
-                    newFlag.className = "extraFlag";
-
-                    newFlag.target = '_blank';
-                    //padding format: TOP x RIGHT_OF x BOTTOM x LEFT_OF
-                    newFlag.style = "padding: 0px 0px 0px 5px; vertical-align:;display: inline-block; width: 16px; height: 11px; position: relative;";
-
-                    console.log("resolved " + postedRegions[i]);
-                }
+                if (postedRegions[i] != "empty, or there were errors. Re-set your flags.") { path = "actual_flags/" + postedRegions[i]; }
+                else { path = "/empty" ; }
+                var newFlag = document.createElement('a');
+                nameBlock.appendChild(newFlag);
+                var lastI = i;
+                newFlag.innerHTML = "<img src=\"" + flegsBaseUrl + path + ".png\"" + " title=\"" + postedRegions[i] + "\">";
+                newFlag.className = "bantFlag";
+                newFlag.target = '_blank';
+                //padding format: TOP x RIGHT_OF x BOTTOM x LEFT_OF
+                newFlag.style = "padding: 0px 0px 0px 5px; vertical-align:;display: inline-block; width: 16px; height: 11px; position: relative;";
+                console.log("resolved " + postedRegions[i]);
             }
         }
 
@@ -379,7 +248,7 @@ document.addEventListener('QRPostSuccessful', function (e) {
             method: "POST",
             url: backendBaseUrl + postUrl,
             data: "post_nr=" + encodeURIComponent(e.detail.postID) + "&" + "board=" + encodeURIComponent(e.detail.boardID) + "&" + "regions=" +
-            encodeURIComponent(regions.slice(1).join(regionDivider)),
+            encodeURIComponent(regions.slice().join(regionDivider)),
             headers: {
                 "Content-Type": "application/x-www-form-urlencoded"
             },
@@ -401,7 +270,7 @@ document.addEventListener('4chanQRPostSuccess', function (e) {
             method: "POST",
             url: backendBaseUrl + postUrl,
             data: "post_nr=" + encodeURIComponent(evDetail.postId) + "&" + "board=" + encodeURIComponent(boardID) + "&" + "regions=" +
-            encodeURIComponent(regions.slice(1).join(regionDivider)),
+            encodeURIComponent(regions.slice().join(regionDivider)),
             headers: {
                 "Content-Type": "application/x-www-form-urlencoded"
             },
@@ -474,6 +343,6 @@ if (navigator.userAgent.toLowerCase().indexOf('webkit') > -1) {
 /** END fix flag alignment on chrome */
 
 /** setup init and start first calls */
-setup.init();
+nsetup.init();
 parseOriginalPosts();
 resolveRefFlags();
