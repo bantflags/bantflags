@@ -27,7 +27,7 @@
 
 /* Right margin: 160 */
 
-// DO NOT EDIT ANYTHING IN THIS SCRIPT DIRECTLY - YOUR REGION SHOULD BE CONFIGURED BY USING THE CONFIGURATION BOXES
+// DO NOT EDIT ANYTHING IN THIS SCRIPT DIRECTLY - YOUR REGION SHOULD BE CONFIGURED BY USING THE CONFIGURATION BOXES 
 var regions = [];
 var regionVariable = 'regionVariableAPI2';
 var allPostsOnPage = [];
@@ -52,7 +52,7 @@ var nsetup = { // not anymore a clone of the original setup
     fillHtml: function (path1) {
           var path = flegsBaseUrl + "/actual_flags/";
           var oldPath = path;
-          // resolve countries which we support
+          // resolve countries which we support 
           GM_xmlhttpRequest({
              method: "GET",
              url: path + flagListFile,
@@ -80,11 +80,11 @@ var nsetup = { // not anymore a clone of the original setup
         //console.log("loading happens here");
         return GM_getValue(nsetup.namespace + k);
     },
-    setFlag: function(flag) { // place a flag from the selector to the flags array variable and create an element in the flags_container div
+    setFlag: function(flag) { // place a flag from the selector to the flags array variable and create an element in the flags_container div 
         var path = flegsBaseUrl + '/actual_flags/';
         var UID = Math.random().toString(36).substring(7);
         if (!flag) {
-            var flagName = document.getElementById("flagSelect").value;
+            var flagName = document.getElementById("flagSelect").value;      
         } else {
             flagName = flag;
         }
@@ -113,7 +113,7 @@ var nsetup = { // not anymore a clone of the original setup
         addGlobalStyle('.flagsForm{text-align: right;}');
         addGlobalStyle(".bottomCtrl{text-align: right !important; } .bantflags_flag { padding: 1px;} [title^='Romania'] { position: relative; animation: shakeAnim 0.1s linear infinite;} @keyframes shakeAnim { 0% {left: 1px;} 25% {top: 2px;} 50% {left: 1px;} 75% {left: 0px;} 100% {left: 2px;}}");
         document.getElementsByClassName("bottomCtrl")[0].parentNode.appendChild(document.createElement("br")); // lol                                    Copy and paste abstraction
-        document.getElementsByClassName("bottomCtrl")[0].parentNode.appendChild(document.createElement("br")); // I don't like this either but that stupid delete form floats right
+        document.getElementsByClassName("bottomCtrl")[0].parentNode.appendChild(document.createElement("br")); // I don't like this either but that stupid delete form floats right 
         document.getElementsByClassName("bottomCtrl")[0].parentNode.appendChild(flagsForm);
         for (var i in regions) {
             nsetup.setFlag(regions[i]);
@@ -147,7 +147,7 @@ if (!regions) {
     setTimeout(function () {
         window.confirm("Bant Flags: No Flags detected");
     }, 2000);
-}
+}  
 
 /** parse the posts already on the page before thread updater kicks in */
 function parseOriginalPosts() {
